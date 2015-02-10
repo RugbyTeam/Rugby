@@ -1,0 +1,1 @@
+from .rugby import Rugby
