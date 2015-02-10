@@ -11,5 +11,21 @@ All projects which wish to use Rugby, must have a `.rugby.yml` file in the proje
 
 ```
 
+## Development
 
+### Pre-Requisites
 
+* Install [pip](https://pip.pypa.io/en/latest/installing.html)
+* Install [virtualenv](http://docs.python-guide.org/en/latest/dev/virtualenvs/)
+
+### Setting up the environment
+
+* Create a directory named `venv`
+* Create a virtualenv by running `virtualenv venv`
+* Activate virtualenv by running `. venv/bin/activate`
+* Install Rugby's dependancies by running `pip install -r requirements.txt`
+* Set your PYTHONPATH environment variable to the root of the Rugby project. `export PYTHONPATH=/path/to/Rugby`
+
+### Examples
+
+Examples will be located in the `/example` directory. Run any example by running the corresponding example's `run.py`.
