@@ -20,7 +20,7 @@ class Rugby:
     Rugby Methods
 
     """
-    def init(self, directory):
+    def __init__(self, directory):
         self.vagrant_cwd = directory
 
     def up(self):
