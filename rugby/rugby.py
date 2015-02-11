@@ -65,6 +65,8 @@ class RugbyTask:
             #TODO: Parse rugby_config here and place in vagrant_cwd
             # set state to fail if parse failed
             
+            rugby_load = RugbyLoader(self.rugby_config)
+            rugby_load.render_vagrant(self.vagrant_cwd)
         except OSError:
             print "RugbyTask Provisioning OSError"
 
