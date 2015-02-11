@@ -7,6 +7,7 @@ import os
 
 import logging
 
+# TODO: Implement logger/debugger thingy
 rugby_log = logging.getLogger('rugby_log')
 rugby_log.setLevel(logging.DEBUG)
 
@@ -20,20 +21,18 @@ class RugbyState(Enum):
 class Rugby:
     """
     Rugby Globals
-        - tasks: dictionary that holds current Rugby tasks and the commit ID 
-
+        - tasks: dictionary that holds all Rugby tasks referenced by commit ID 
     """
     tasks = {}
 
     """
     Rugby Methods
-
     """
     def __init__(self, rugby_root):
         self.rugby_root = rugby_root
 
-    def up(self, commit_id, clone_url):
-        rt = RugbyTask(commit_id, self.rugby_root, clone_url)
+    def up(self, commit_id, rugby_config):
+        rt = RugbyTask(commit_id, self.rugby_root, rugby_config)
         Rugby.tasks[commit_id] = rt
         rt.provision()
 
@@ -43,29 +42,36 @@ class Rugby:
 class RugbyTask:
     """
     RugbyTask Globals
-        - process_pool: list that holds currently running subprocesses
+        - task_pool: list that holds currently running task subprocesses
     """
     task_pool = []
 
-    def __init__(self, commit_id, rugby_root, clone_url):
+    """
+    RugbyTask Methods
+    """
+    def __init__(self, commit_id, rugby_root, rugby_config):
         self.commit_id = commit_id
         self.vagrant_cwd = rugby_root + ("/%s" % commit_id)
-
-        if not os.path.exists(self.vagrant_cwd):
-            os.makedirs(self.vagrant_cwd)
-
-        self.clone_url = clone_url
+        self.rugby_config = rugby_config
         self.state = RugbyState.standby
 
     def provision(self):
         self.state = RugbyState.provisioning
-        #print "Running vagrant up on... %s" % self.vagrant_cwd
-        #rugby_log.debug("Running vagrant up on... %s" % self.vagrant_cwd)
+
+        try:
+            if not os.path.exists(self.vagrant_cwd):
+                os.makedirs(self.vagrant_cwd)
+
+            #TODO: Parse rugby_config here and place in vagrant_cwd
+            # set state to fail if parse failed
+            
+        except OSError:
+            print "RugbyTask Provisioning OSError"
 
         # Start the VMs
-        logfile = self.vagrant_cwd + ("/%s.log" % self.commit_id)
+        logfile = os.path.join(self.vagrant_cwd, '%s.log' % self.commit_id)
         with open(logfile, 'a') as f:
-            self.pproc = Popen([config.SCRIPTS_DIR + '/vagrant_wrapper.sh'], stdout=f)
+            self.pproc = Popen([config.VAGRANT_WRAPPER_SCRIPT, self.vagrant_cwd, "up"], stdout=f, stderr=f)
             RugbyTask.task_pool.append(self)
 
     def notify(self):
@@ -76,6 +82,7 @@ class RugbyTask:
         else:
             self.run_all_tests()
 
+    #TODO: Define how tests work... how they are referenced and run
     def run_test(self, test):
         print "%s running test %s" % (self.commit_id, test)
 
