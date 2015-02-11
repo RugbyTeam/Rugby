@@ -62,3 +62,7 @@ target/
 [Ss]cripts
 pyvenv.cfg
 pip-selfcheck.json
+
+# Vim
+*.swp
+
