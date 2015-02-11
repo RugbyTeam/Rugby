@@ -1,0 +1,18 @@
+Vagrant.configure "2" do |config|  
+    {% for vm in vms %}
+    config.vm.define "{{ vm.name }}" do |{{ vm.service.group }}|
+        {{ vm.service.group }}.vm.box = "ubuntu/trusty64"
+        {{ vm.service.group}}.vm.network "private_network", ip: "{{ vm.ip }}"
+    {{ vm.service.group }}.vm.provision "ansible" do |ansible|
+            ansible.playbook = "{{ site_yml_path }}"
+            ansible.sudo = true
+            ansible.groups = {
+               "{{ vm.service.group }}" => ["{{ vm.name }}"]
+            }
+            ansible.extra_vars = {
+                {{ vm.service.group }}_type: "{{ vm.service.type }}"
+            }
+        end
+    end
+    {% endfor %}
+end
