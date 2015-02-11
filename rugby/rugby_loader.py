@@ -10,6 +10,10 @@ import os
 
 class RugbyLoader:
     """
+    Usage:
+        rugby_load = RugbyLoader('path/to/.rugby.yml')
+        rugby_load.render_vagrant('/opt/VMs')
+    
     RugbyLoader globals
         - rugby_conf: path to .rugby.yml
         - rugby_obj: dictionary version of .rugby.yml
@@ -33,7 +37,7 @@ class RugbyLoader:
         
         self.rugby_obj = vms
 
-    def render(self, dest_dir):
+    def render_vagrant(self, dest_dir):
         """
         dest_dir = path to directory where rendered
                    Vagrantfile should go
