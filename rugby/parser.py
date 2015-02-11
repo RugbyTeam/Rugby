@@ -28,6 +28,9 @@ Example:
         parse(template_path, site_yml_path, config_basepath, output_basepath)
 
 """
+# Global dictionary of private IP Addresses 
+ips = {'db': '192.168.0.0', 'lang': '192.168.0.1'}
+
 def parse(template_path, site_yml_path, config_basepath, output_basepath):
     template_path_parts = template_path.split('/')
 
@@ -42,6 +45,8 @@ def parse(template_path, site_yml_path, config_basepath, output_basepath):
 
     with open(config_path, 'r') as config_file:
         vms = yaml.safe_load(config_file)
+        for vm in vms:
+            vm['ip'] = ips[vm['service']['group']]
         with open(generated_vagrantfile_path, 'w') as generated_vagrantfile:
             template_output = template.render(vms = vms, site_yml_path=site_yml_path)
             generated_vagrantfile.write(template_output)
