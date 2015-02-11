@@ -19,7 +19,7 @@ if [ $# -lt 2 ]; then
 fi
 
 # Directory path
-DIR="$1"
+DIR="${1%/}"
 # Remaining arguments to be fed to `vagrant`
 shift
 ARGS="$@"
