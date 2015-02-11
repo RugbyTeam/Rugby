@@ -41,7 +41,7 @@ def parse(playbook_basepath, config_basepath, **kwargs):
     generated_vagrantfile_path = playbook_basepath + '/' + VAGRANTFILE
 
     with open(config_path, 'r') as config_file:
-        vms = yaml.load(config_file)
+        vms = yaml.safe_load(config_file)
         with open(generated_vagrantfile_path, 'w') as generated_vagrantfile:
             template_output = template.render(vms = vms)
             generated_vagrantfile.write(template_output)
