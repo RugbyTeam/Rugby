@@ -29,7 +29,7 @@ Example:
 
 """
 # Global dictionary of private IP Addresses 
-ips = {'db': '192.168.0.0', 'lang': '192.168.0.1'}
+ips = {'db': '192.168.0.15', 'lang': '192.168.0.16'}
 
 def parse(template_path, site_yml_path, config_basepath, output_basepath):
     template_path_parts = template_path.split('/')
