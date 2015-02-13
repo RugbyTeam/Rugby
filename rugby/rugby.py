@@ -1,16 +1,17 @@
+# internal
 from rugby_loader import RugbyLoader
 import config
 
-from subprocess import Popen
+# external
 from enum import Enum
+
+# stdlib
+from subprocess import Popen
+import logging
 import threading
 import os
 
-import logging
-
-# TODO: Implement logger/debugger thingy
-rugby_log = logging.getLogger('rugby_log')
-rugby_log.setLevel(logging.DEBUG)
+logger = logging.getLogger(config.LOGGER_NAME)
 
 class RugbyState(Enum):
     standby = 1
@@ -52,7 +53,7 @@ class RugbyTask:
     """
     def __init__(self, commit_id, rugby_root, rugby_config):
         self.commit_id = commit_id
-        self.vagrant_cwd = rugby_root + ("/%s" % commit_id)
+        self.vagrant_cwd = os.path.join(rugby_root, commit_id)
         self.rugby_config = rugby_config
         self.state = RugbyState.standby
 
@@ -69,7 +70,7 @@ class RugbyTask:
             rugby_load = RugbyLoader(self.rugby_config)
             rugby_load.render_vagrant(self.vagrant_cwd)
         except OSError:
-            print "RugbyTask Provisioning OSError"
+            logger.error("RugbyTask Provisioning OSError")
 
         # Start the VMs
         logfile = os.path.join(self.vagrant_cwd, '%s.log' % self.commit_id)
@@ -81,23 +82,23 @@ class RugbyTask:
         # Analyze provisioning status
         if self.pproc.poll() != 0:
             self.state = RugbyState.fail
-            print "Provisioning Process Failed"
+            logger.error("Provisioning Process Failed")
         else:
             self.run_all_tests()
 
     #TODO: Define how tests work... how they are referenced and run
     def run_test(self, test):
-        print "%s running test %s" % (self.commit_id, test)
+        logger.info("{} running test {}".format(self.commit_id, test))
 
     def run_all_tests(self):
-        print "%s running all tests" % self.commit_id
+        logger.info("{} running all tests".format(self.commit_id))
 
 # Start up subprocess poller
 def task_poller():
     while True:
         for task in RugbyTask.task_pool:
             if task.pproc.poll() != None:
-                print "Process Terminated... ", task.pproc, " Exit code: %d" % task.pproc.poll()
+                logger.debug("Process Terminated... {} Exit code: {}".format(task.pproc.poll(), task.pproc))
                 RugbyTask.task_pool.remove(task)
                 task.notify()
 
