@@ -1,3 +1,4 @@
+from rugby_loader import RugbyLoader
 import config
 
 from subprocess import Popen
