@@ -57,7 +57,7 @@ class Rugby:
         # Create a log file for Worker to send output to
         worker_log_path = os.path.join(self.rugby_log_dir, commit_id)
         with open(worker_log_path, 'a') as f:
-            f.write('\nStarting job with commit id {}... \n'.format(commit_id)) 
+            f.write('Starting job with commit id {}... \n\n'.format(commit_id)) 
 
         # Start worker process
         worker_process = Process(target=rw, args=(their_end, worker_log_path))
