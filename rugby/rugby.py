@@ -4,6 +4,8 @@ import config
 
 # stdlib
 from multiprocessing import Process, Pipe
+from threading import Thread
+import time
 import logging
 
 logger = logging.getLogger(config.LOGGER_NAME)
@@ -53,3 +55,25 @@ class Rugby:
         # Record worker info
         worker_info = WorkerInfo(worker_process.pid, my_end)
         Rugby.workers[commit_id] = worker_info
+
+def worker_poller():
+    """
+    This function continuously polls every rugby worker in 
+    Rugby.workers to see if they have a message to share 
+    with us. Actions are performed based on those messages.
+    """
+    while True:
+        for worker_id, worker in Rugby.workers.iteritems():
+            # If worker has sent a message
+            if worker.msg_pipe.poll():
+                # Fetch message from pipe
+                msg = str(worker.msg_pipe.recv()) 
+                logger.debug(msg)   
+
+        # Wait a bit before checking again
+        time.sleep(5)
+
+# Start polling workers 
+t = Thread(target=worker_poller)
+t.daemon = True
+t.start()
