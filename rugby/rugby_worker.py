@@ -11,6 +11,7 @@ import errno
 import os
 import time
 import sys
+import shutil
 
 class RugbyWorker:
     def __init__(self, commit_id, rugby_root_dir, rugby_config_path):
@@ -62,7 +63,7 @@ class RugbyWorker:
         # If we are in DEBUG_MODE, we probably also want to log the
         # initial bring up of VMs, eventhough this is info our user
         # would not want to see
-        if config.DEBUG_MODE = True:
+        if config.DEBUG_MODE == True:
             sys.stdout = sys.stderr = self._log_fd
         
         # Spawn VMs
@@ -72,7 +73,7 @@ class RugbyWorker:
         # Log output from user defined actions. If DEBUG_MODE is on,
         # then output is already being logged and we don't have to do
         # anything
-        if config.DEBUG_MODE = False:
+        if config.DEBUG_MODE == False:
             sys.stdout = sys.stderr = self._log_fd
 
         # DO OTHER THINGS
@@ -80,6 +81,8 @@ class RugbyWorker:
         # Set stdout and stderr back to what they were originally
         sys.stdout = orig_stdout
         sys.stderr = orig_stderr
+
+        self._cleanup()
 
     def _initialization(self):
         """
@@ -162,3 +165,25 @@ class RugbyWorker:
         self._state = RugbyState.ERROR
         self._send_msg(msg)
         sys.exit(1)
+
+    def _cleanup(self):
+        """
+        Helper function which will delete any files generated
+        by worker (except log file), and close open file descriptor
+        """
+        if os.path.isdir(self.root_dir):
+            # Destroy VMs
+            self._vagrant.destroy()
+            # Remove root directory
+            try:
+                shutil.rmtree(self.root_dir, ignore_errors=True)
+            except Exception:
+                pass
+
+        # Close log fd
+        if self._log_fd != None:
+            self._log_fd.close()
+
+        # Close msg pipe
+        if self._msg_pipe != None:
+            self._msg_pipe.close()
