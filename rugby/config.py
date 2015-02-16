@@ -14,6 +14,7 @@ GROUP_TO_TYPES = {
 TYPES = sorted({vm_type for vm_types in GROUP_TO_TYPES.itervalues() for vm_type in vm_types})
 
 # Rugby constants
+DEBUG_MODE = True
 BASE_DIR = '/opt/VMs'
 LOG_DIR = '/opt/VM_Logs'
 SITE_YML = '/opt/Rugby-Playbooks/site.yml'
