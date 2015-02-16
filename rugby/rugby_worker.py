@@ -111,6 +111,18 @@ class RugbyWorker:
         complete_msg = "{} {} {}".format(self.commit_id, self._state, msg)
         self._msg_pipe.send(complete_msg)
 
+    @staticmethod
+    def extract_id_and_state(msg):
+        """
+        This method takes a message sent using RugbyWorker._send_msg
+        in the following format
+            <commit_id> <state> <msg>
+        and returns the first 2 components.
+            [commit_id, state]
+        """
+        split_msg = msg.split(' ')
+        return split_msg[0], split_msg[1]
+
     def _suicide(self, msg):
         """
         Helper function which will set error state, send
