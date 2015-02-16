@@ -26,6 +26,15 @@ All projects which wish to use Rugby, must have a `.rugby.yml` file in the proje
 * Install Rugby's dependancies by running `pip install -r requirements.txt`
 * Set your PYTHONPATH environment variable to the root of the Rugby project. `export PYTHONPATH=/path/to/Rugby`
 
+### Applying patches
+
+One of our projects dependancies, `python-vagrant`, has an issue which messes with logging. To apply the patch to fix this issue, run the following
+
+```bash
+patch venv/lib/python2.7/site-packages/vagrant/__init__.py < patches/vagrant_quiet_logging_issue.patch
+```
+
+
 ### Examples
 
 Examples will be located in the `/example` directory. Run any example by running the corresponding example's `run.py`.
