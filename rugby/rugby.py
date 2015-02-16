@@ -17,12 +17,19 @@ class WorkerInfo:
     """
     Struct to hold all the info we need about a RugbyWorker
     """
-    def __init__(self, worker_pid, worker_msg_pipe):
+    def __init__(self, worker_pid, worker_msg_pipe, worker_callbacks):
         self.pid = worker_pid
         self.msg_pipe = worker_msg_pipe
-
+        # List of callback functions to call when worker state
+        # changes
+        #
+        # Format of callback
+        #   func_name('<commit_id>, '<RugbyState>')
+        self.callbacks = worker_callbacks
+        
         # Will be set as Worker starts to work (haha)
         self.state = None
+       
 
 class Rugby:
     """
@@ -42,11 +49,20 @@ class Rugby:
         self.rugby_root = rugby_root
         self.rugby_log_dir = rugby_log_dir
 
-    def start_runner(self, commit_id, rugby_config):
+    def start_runner(self, commit_id, rugby_config, *args):
         """
-        Method takes a unique commit_id and a path (rugby_config)
-        to a rugby config file and creates a rugby worker which will 
-        execute all the instructions in the config
+        Method takes a unique commit_id, a path (rugby_config)
+        to a rugby config file, and any number of callback functions 
+        and creates a rugby worker which will execute all the instructions 
+        in the config. The callback functions will be called everytime there 
+        is a state change in the worker.
+
+        Format of a callback:
+
+            func_name(<commit_id>, <RugbyState>)
+
+        Where commit_id is the unique id used to spawn the worker, and RugbyState is
+        the workers current state, which can be found in rugby_state.py
         """
         # Instantiate a worker
         rw = RugbyWorker(commit_id, self.rugby_root, rugby_config)
@@ -64,7 +80,7 @@ class Rugby:
         worker_process.start()
 
         # Record worker info
-        worker_info = WorkerInfo(worker_process.pid, my_end)
+        worker_info = WorkerInfo(worker_process.pid, my_end, args)
         Rugby.workers[commit_id] = worker_info
 
     @staticmethod
@@ -98,6 +114,12 @@ def worker_poller():
                 # NOTE: commit_id and worker_id should be equal
                 # to each other
                 commit_id, state = RugbyWorker.extract_id_and_state(recv_msg)
+                # Run worker callback functions with the new state
+                # information
+                for cb in worker.callbacks:
+                    # Run each callback
+                    t = Thread(target=cb, args=(commit_id, state))
+                    t.start()
                 # Perform state change. State might not always change
                 # if current worker state is already set to what is present
                 # in the message
