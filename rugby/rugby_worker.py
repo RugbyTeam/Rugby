@@ -33,11 +33,13 @@ class RugbyWorker:
             _msg_pipe = Connection Object which is used to send/recieve messages
                         with process that spawned this worker
             _log_fd   = File descriptor where output to be logged should go
+            _conf_obj = Dict representation of rugby config 
         """
         self._state = RugbyState.STANDBY
         self._vagrant = None
         self._msg_pipe = None
         self._log_fd = None
+        self._conf_obj = None
 
     def __call__(self, msg_pipe, log_path=os.devnull):
         # Set pipe (multiprocessing.Connection) which will
@@ -82,7 +84,18 @@ class RugbyWorker:
         sys.stdout = orig_stdout
         sys.stderr = orig_stderr
 
+        # Cleanup
+        self._state = RugbyState.CLEANING_UP
         self._cleanup()
+
+        # Done! If we made it to here, there were no errors
+        self._state = RugbyState.SUCCESS
+        self._send_msg("Finished")
+
+        # Close message pipe, we do it here and not in the 
+        # cleanup function because we still needed to notify
+        # the parent that we have finished
+        self._msg_pipe.close()
 
     def _initialization(self):
         """
@@ -112,6 +125,9 @@ class RugbyWorker:
             rugby_loader.render_vagrant(self.root_dir)
         except Exception:
             self._suicide("Failed to generate Vagrantfile from config")
+
+        # Set internal conf_obj to Dict version of rugby config
+        self._conf_obj = rugby_loader.rugby_obj
 
         # Set internal vagrant object, initializing
         # it to self.root_dir
@@ -171,6 +187,7 @@ class RugbyWorker:
         Helper function which will delete any files generated
         by worker (except log file), and close open file descriptor
         """
+        self._send_msg("Cleaning up")
         if os.path.isdir(self.root_dir):
             # Destroy VMs
             self._vagrant.destroy()
@@ -183,7 +200,3 @@ class RugbyWorker:
         # Close log fd
         if self._log_fd != None:
             self._log_fd.close()
-
-        # Close msg pipe
-        if self._msg_pipe != None:
-            self._msg_pipe.close()
