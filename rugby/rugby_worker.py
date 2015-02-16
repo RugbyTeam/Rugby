@@ -31,24 +31,55 @@ class RugbyWorker:
                         with VMs
             _msg_pipe = Connection Object which is used to send/recieve messages
                         with process that spawned this worker
+            _log_fd   = File descriptor where output to be logged should go
         """
         self._state = RugbyState.STANDBY
         self._vagrant = None
         self._msg_pipe = None
+        self._log_fd = None
 
-    def __call__(self, msg_pipe):
+    def __call__(self, msg_pipe, log_path=os.devnull):
         # Set pipe (multiprocessing.Connection) which will
         # be used to talk to parent process who spawned this
         # worker
         self._msg_pipe = msg_pipe
 
+        # Create fd from log_path which is where select output
+        # from worker will be sent. Output is unbuffered
+        try:
+            self._log_fd = open(log_path, 'a', 0)
+        except Exception:
+            self._suicide("Couldn't open {} for piping worker output".format(log_path))
+
+        # Save orginal stdout and stderr
+        orig_stdout = sys.stdout
+        orig_stderr = sys.stderr 
+
         # Initialize
         self._state = RugbyState.INITIALIZING
         self._initialization()
         
+        # If we are in DEBUG_MODE, we probably also want to log the
+        # initial bring up of VMs, eventhough this is info our user
+        # would not want to see
+        if config.DEBUG_MODE = True:
+            sys.stdout = sys.stderr = self._log_fd
+        
         # Spawn VMs
         self._state = RugbyState.SPAWNING_VMS
         self._spawn_vms()
+
+        # Log output from user defined actions. If DEBUG_MODE is on,
+        # then output is already being logged and we don't have to do
+        # anything
+        if config.DEBUG_MODE = False:
+            sys.stdout = sys.stderr = self._log_fd
+
+        # DO OTHER THINGS
+
+        # Set stdout and stderr back to what they were originally
+        sys.stdout = orig_stdout
+        sys.stderr = orig_stderr
 
     def _initialization(self):
         """
@@ -82,7 +113,7 @@ class RugbyWorker:
         # Set internal vagrant object, initializing
         # it to self.root_dir
         try:
-            self._vagrant = Vagrant(self.root_dir)
+            self._vagrant = Vagrant(self.root_dir, quiet_stdout=False, quiet_stderr=False)
         except Exception:
             self._suicide("Failed to instantiate internal vagrant object")
 

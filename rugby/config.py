@@ -15,6 +15,7 @@ TYPES = sorted({vm_type for vm_types in GROUP_TO_TYPES.itervalues() for vm_type 
 
 # Rugby constants
 BASE_DIR = '/opt/VMs'
+LOG_DIR = '/opt/VM_Logs'
 SITE_YML = '/opt/Rugby-Playbooks/site.yml'
 TEMPLATES_DIR = abspath(join(dirname(__file__), 'templates'))
 VAGRANT_TEMPLATE_FILE = join(TEMPLATES_DIR, 'Vagrantfile.j2')

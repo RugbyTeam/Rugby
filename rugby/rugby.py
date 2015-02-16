@@ -9,6 +9,7 @@ from threading import Thread
 import time
 import logging
 import signal
+import os
 
 logger = logging.getLogger(config.LOGGER_NAME)
 
@@ -31,12 +32,15 @@ class Rugby:
     """
     workers = {}
 
-    def __init__(self, rugby_root=config.BASE_DIR):
+    def __init__(self, rugby_root=config.BASE_DIR, rugby_log_dir=config.LOG_DIR):
         """
-        rugby_root = Directory where all rugby generated files
-                     should be placed
+        rugby_root    = Directory where all rugby generated files
+                        should be placed
+        rugby_log_dir = Directory where all rugby worker logs should
+                        be placed
         """
         self.rugby_root = rugby_root
+        self.rugby_log_dir = rugby_log_dir
 
     def start_runner(self, commit_id, rugby_config):
         """
@@ -50,8 +54,13 @@ class Rugby:
         # Create pipe for interprocess communication
         my_end, their_end = Pipe()
 
+        # Create a log file for Worker to send output to
+        worker_log_path = os.path.join(self.rugby_log_dir, commit_id)
+        with open(worker_log_path, 'a') as f:
+            f.write('\nStarting job with commit id {}... \n'.format(commit_id)) 
+
         # Start worker process
-        worker_process = Process(target=rw, args=(their_end,))
+        worker_process = Process(target=rw, args=(their_end, worker_log_path))
         worker_process.start()
 
         # Record worker info
