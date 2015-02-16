@@ -8,6 +8,7 @@ from multiprocessing import Process, Pipe
 from threading import Thread
 import time
 import logging
+import signal
 
 logger = logging.getLogger(config.LOGGER_NAME)
 
@@ -100,3 +101,18 @@ def worker_poller():
 t = Thread(target=worker_poller)
 t.daemon = True
 t.start()
+
+def sigint_handler(sig_num, frame):
+    """
+    Handler for when Ctrl-C, or SIGINT is sent. This
+    function will perform proper cleanup if necessary
+    """
+    # TODO: More proper cleanup will need to be done
+    # here
+    if len(Rugby.workers) > 0:
+        logger.debug("Performing cleanup tasks, don't spam Ctrl-C")
+        # Delete workers
+        Rugby.workers = {}
+
+# Install sigint handler
+signal.signal(signal.SIGINT, sigint_handler)
