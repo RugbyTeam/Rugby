@@ -1,14 +1,5 @@
---- vagrant_orig.py	2015-02-15 23:32:03.000000000 -0800
-+++ vagrant_new.py	2015-02-15 23:32:37.000000000 -0800
-@@ -20,7 +20,7 @@
- 
- # python package version
- # should match r"^__version__ = '(?P<version>[^']+)'$" for setup.py
--__version__ = '0.5.2'
-+__version__ = '0.5.3'
- 
- 
- log = logging.getLogger(__name__)
+--- old_vagrant_init.py	2015-02-22 22:38:21.000000000 -0800
++++ new_vagrant_init.py	2015-02-22 22:39:03.000000000 -0800
 @@ -705,16 +705,13 @@
          '''
          # Make subprocess command
