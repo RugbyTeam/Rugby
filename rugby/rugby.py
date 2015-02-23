@@ -8,6 +8,7 @@ from multiprocessing import Process, Pipe
 from threading import Thread
 import time
 import logging
+import sys
 import signal
 import os
 
@@ -144,6 +145,7 @@ def sigint_handler(sig_num, frame):
         logger.debug("Performing cleanup tasks, don't spam Ctrl-C")
         # Delete workers
         Rugby.workers = {}
+        sys.exit(1)
 
 # Install sigint handler
 signal.signal(signal.SIGINT, sigint_handler)
