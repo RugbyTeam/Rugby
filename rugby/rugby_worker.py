@@ -5,6 +5,7 @@ import config
 
 # external
 from vagrant import Vagrant
+from fabric.api import settings, env, sudo, hide
 
 # stdlib
 import errno
@@ -78,7 +79,9 @@ class RugbyWorker:
         if config.DEBUG_MODE == False:
             sys.stdout = sys.stderr = self._log_fd
 
-        # DO OTHER THINGS
+        # Run any install commands
+        self._state = RugbyState.RUNNING_INSTALL
+        self._install()
 
         # Set stdout and stderr back to what they were originally
         sys.stdout = orig_stdout
@@ -149,6 +152,48 @@ class RugbyWorker:
             self._vagrant.up()
         except Exception:
             self._suicide("Failed to complete vagrant up")
+
+    def _install(self):
+        """
+        Helper function which executes all user defined
+        install commands
+        """
+        self._send_msg("Running install commands")
+
+        for vm in self._conf_obj:
+            if 'install' in vm.keys():
+                # VM info needed to run command through fabric
+                keyfile = self._vagrant.keyfile(vm['name'])
+                user = self._vagrant.user(vm['name'])
+                port = self._vagrant.port(vm['name'])
+                host = self._vagrant.hostname(vm['name'])
+
+                # Set passphrase/sudo password so we arn't prompted
+                # should be default by 'vagrant'
+                env.password = 'vagrant' 
+
+                # Disable fabric output prefixes IE ip and output stream info
+                env.output_prefix = False
+
+                # Prevent fabric from kicking us out from the script when
+                # a command fails
+                env.warn_only = True
+
+                for cmd in vm['install']:
+                    with settings(hide('aborts','warnings'),
+                                  key=keyfile,
+                                  user=user, 
+                                  port=port, 
+                                  host_string=host, 
+                                  disable_known_hosts='True', 
+                                  forward_agent='True',
+                                  abort_on_prompts='True'):
+                        
+                        return_obj = sudo(cmd)
+
+                        # If command failed, we should bail
+                        if return_obj.failed == True:
+                            self._suicide('Command \'{}\' failed to run'.format(cmd))
 
     def _send_msg(self, msg):
         """
