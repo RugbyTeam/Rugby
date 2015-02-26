@@ -42,7 +42,21 @@ class RugbyWorker:
         self._log_fd = None
         self._conf_obj = None
 
+    def __del__(self):
+        """
+        Cleanup when reference to this worker is gone, which means
+        ctrl-c was hit. This method runs in the main processes context 
+        and NOT a subprocess context
+        """
+        self._cleanup()
+
     def __call__(self, msg_pipe, log_path=os.devnull):
+        """
+        This method is run in a subprocess context. NOT in 
+        the main rugby context. Therefore, things we set
+        here will not necessary be available to the calling
+        rugby module
+        """
         # Set pipe (multiprocessing.Connection) which will
         # be used to talk to parent process who spawned this
         # worker
@@ -61,6 +75,7 @@ class RugbyWorker:
 
         # Initialize
         self._state = RugbyState.INITIALIZING
+        self._send_msg("Creating VM Directory")
         self._initialization()
         
         # If we are in DEBUG_MODE, we probably also want to log the
@@ -71,6 +86,7 @@ class RugbyWorker:
         
         # Spawn VMs
         self._state = RugbyState.SPAWNING_VMS
+        self._send_msg("Starting up VMs and performing initial provisioning")
         self._spawn_vms()
 
         # Log output from user defined actions. If DEBUG_MODE is on,
@@ -81,6 +97,7 @@ class RugbyWorker:
 
         # Run any install commands
         self._state = RugbyState.RUNNING_INSTALL
+        self._send_msg("Running install commands")
         self._install()
 
         # Set stdout and stderr back to what they were originally
@@ -89,6 +106,7 @@ class RugbyWorker:
 
         # Cleanup
         self._state = RugbyState.CLEANING_UP
+        self._send_msg("Cleaning up")
         self._cleanup()
 
         # Done! If we made it to here, there were no errors
@@ -107,7 +125,6 @@ class RugbyWorker:
             - Create Directory for VMs
             - Generate Vagrantfile from rugby conf
         """
-        self._send_msg("Creating VM Directory")
         
         # Create directory for storing VM data
         try:
@@ -145,7 +162,6 @@ class RugbyWorker:
         to bring up VM's and provisions them with 
         our basic packages (defined in Vagrantfile)
         """
-        self._send_msg("Starting up VMs and performing initial provisioning")
 
         # Start VMs
         try:
@@ -158,7 +174,6 @@ class RugbyWorker:
         Helper function which executes all user defined
         install commands
         """
-        self._send_msg("Running install commands")
 
         for vm in self._conf_obj:
             if 'install' in vm.keys():
@@ -233,7 +248,6 @@ class RugbyWorker:
         Helper function which will delete any files generated
         by worker (except log file), and close open file descriptor
         """
-        self._send_msg("Cleaning up")
         if os.path.isdir(self.root_dir):
             # Destroy VMs
             self._vagrant.destroy()
