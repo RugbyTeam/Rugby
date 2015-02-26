@@ -139,11 +139,11 @@ def sigint_handler(sig_num, frame):
     Handler for when Ctrl-C, or SIGINT is sent. This
     function will perform proper cleanup if necessary
     """
-    # TODO: More proper cleanup will need to be done
-    # here
+
     if len(Rugby.workers) > 0:
         logger.debug("Performing cleanup tasks, don't spam Ctrl-C")
-        # Delete workers
+        # Delete workers. Doing this calls the __del__ method on each
+        # worker which should perform cleanup
         Rugby.workers = {}
         sys.exit(1)
 
