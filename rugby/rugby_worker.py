@@ -98,7 +98,12 @@ class RugbyWorker:
         # Run any install commands
         self._state = RugbyState.RUNNING_INSTALL
         self._send_msg("Running install commands")
-        self._install()
+        self._run_cmds('install')
+
+        # Run test commands
+        self._state = RugbyState.RUNNING_TESTS
+        self._send_msg("Running test script commands")
+        self._run_cmds('script')
 
         # Set stdout and stderr back to what they were originally
         sys.stdout = orig_stdout
@@ -169,14 +174,15 @@ class RugbyWorker:
         except Exception:
             self._suicide("Failed to complete vagrant up")
 
-    def _install(self):
+    def _run_cmds(self, cmd_type):
         """
         Helper function which executes all user defined
-        install commands
+        commands. 'cmd_type' specifies which type of commands to
+        run from config file EX 'install' and 'script'
         """
 
         for vm in self._conf_obj:
-            if 'install' in vm.keys():
+            if cmd_type in vm.keys():
                 # VM info needed to run command through fabric
                 keyfile = self._vagrant.keyfile(vm['name'])
                 user = self._vagrant.user(vm['name'])
@@ -194,7 +200,7 @@ class RugbyWorker:
                 # a command fails
                 env.warn_only = True
 
-                for cmd in vm['install']:
+                for cmd in vm[cmd_type]:
                     with settings(hide('aborts','warnings'),
                                   key=keyfile,
                                   user=user, 
@@ -209,6 +215,7 @@ class RugbyWorker:
                         # If command failed, we should bail
                         if return_obj.failed == True:
                             self._suicide('Command \'{}\' failed to run'.format(cmd))
+
 
     def _send_msg(self, msg):
         """

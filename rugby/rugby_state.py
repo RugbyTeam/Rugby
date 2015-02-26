@@ -6,7 +6,7 @@ class RugbyState(Enum):
     INITIALIZING = 2
     SPAWNING_VMS = 3
     RUNNING_INSTALL = 4
-    TESTS_RUNNING = 6
+    RUNNING_TESTS = 6
     CLEANING_UP = 7
     ERROR = 8
     SUCCESS = 9
