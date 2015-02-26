@@ -221,10 +221,11 @@ class RugbyWorker:
     def _suicide(self, msg):
         """
         Helper function which will set error state, send
-        message to parent process, then kill the process
+        message to parent process, cleanup, then kill the process
         """
         self._state = RugbyState.ERROR
         self._send_msg(msg)
+        self._cleanup()
         sys.exit(1)
 
     def _cleanup(self):
