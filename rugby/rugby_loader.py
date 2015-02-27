@@ -30,11 +30,20 @@ conf_vm_service_schema = {
     }
 }
 
+arr_of_str_schema = {
+    'type': '//arr',
+    'contents': {'type': '//str'}
+}
+
 conf_vm_schema = {
     'type': '//rec',
     'required' : {
         'name': { 'type': '//str' },
         'service': conf_vm_service_schema
+    }, 
+    'optional': {
+	'install': arr_of_str_schema,
+	'script': arr_of_str_schema
     }
 }
 
@@ -90,6 +99,10 @@ class RugbyLoader:
         for vm in vms:
             vm_group = vm['service']['group']
             vm['ip'] = self.static_ips[vm_group]
+
+	
+    def get_config(self):
+	return self.rugby_obj
 
     def render_vagrant(self, dest_dir):
         """
