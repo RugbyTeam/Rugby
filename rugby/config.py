@@ -21,7 +21,7 @@ BASE_DIR = '/opt/VMs'
 LOG_DIR = '/opt/VM_Logs'
 SITE_YML = '/opt/Rugby-Playbooks/site.yml'
 # Where to clone project in vm
-REPO_DIR = '/home/vagrant'
+REPO_DIR = '/home/vagrant/source'
 TEMPLATES_DIR = abspath(join(dirname(__file__), 'templates'))
 VAGRANT_TEMPLATE_FILE = join(TEMPLATES_DIR, 'Vagrantfile.j2')
 

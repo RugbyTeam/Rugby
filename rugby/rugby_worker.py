@@ -5,7 +5,7 @@ import config
 
 # external
 from vagrant import Vagrant
-from fabric.api import settings, env, sudo, hide
+from fabric.api import settings, env, sudo, hide, cd
 
 # stdlib
 import errno
@@ -202,10 +202,11 @@ class RugbyWorker:
             # Install git. If its already present, then this command
             # should have no effect
             git_install_cmd = 'apt-get install -y git'
-            self._run_cmd(git_install_cmd, host, user, key_password, port, keyfile)  
+            self._run_cmd(git_install_cmd, '.', host, user, key_password, port, keyfile)  
 
             # Clone repo
             git_clone_cmd = 'git clone {} {}'.format(self._clone_url, self._clone_dir)
+            self._run_cmd(git_clone_cmd, '.', host, user, key_password, port, keyfile)
 
     def _install_cmds(self):
         """
@@ -225,7 +226,7 @@ class RugbyWorker:
 
                 # Run commands
                 for cmd in vm['install']:
-                    self._run_cmd(cmd, host, user, key_password, port, keyfile) 
+                    self._run_cmd(cmd, self._clone_dir, host, user, key_password, port, keyfile) 
 
     def _script_cmds(self):
         """
@@ -245,9 +246,9 @@ class RugbyWorker:
 
                 # Run commands
                 for cmd in vm['script']:
-                    self._run_cmd(cmd, host, user, key_password, port, keyfile) 
+                    self._run_cmd(cmd, self._clone_dir, host, user, key_password, port, keyfile) 
         
-    def _run_cmd(self, cmd, host, user, password, port, keyfile):
+    def _run_cmd(self, cmd, location, host, user, password, port, keyfile):
         """
         Helper function which executes a cmd on a remote
         host.
@@ -265,6 +266,7 @@ class RugbyWorker:
         env.warn_only = True
 
         with settings(hide('aborts','warnings'),
+                      cd(location),
                       key=keyfile,
                       user=user, 
                       port=port, 
