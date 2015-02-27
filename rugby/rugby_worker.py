@@ -186,8 +186,7 @@ class RugbyWorker:
     def _clone_source(self):
         """
         Helper function which git clones repository source
-        code into each VM. Ensures git is installed on the VM,
-        and installs it if needed
+        code into each VM.
         """
         for vm in self._conf_obj:
             # VM info needed to run command
@@ -197,12 +196,7 @@ class RugbyWorker:
             host         = self._vagrant.hostname(vm['name'])
             # Password for keyfile which should always be by default
             # 'vagrant'
-            key_password = 'vagrant'
-
-            # Install git. If its already present, then this command
-            # should have no effect
-            git_install_cmd = 'apt-get install -y git'
-            self._run_cmd(git_install_cmd, '.', host, user, key_password, port, keyfile)  
+            key_password = 'vagrant' 
 
             # Clone repo
             git_clone_cmd = 'git clone {} {}'.format(self._clone_url, self._clone_dir)
