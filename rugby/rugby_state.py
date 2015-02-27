@@ -5,7 +5,8 @@ class RugbyState(Enum):
     STANDBY = 1
     INITIALIZING = 2
     SPAWNING_VMS = 3
-    RUNNING_INSTALL = 4
+    CLONING_SOURCE = 4
+    RUNNING_INSTALL = 5
     RUNNING_TESTS = 6
     CLEANING_UP = 7
     ERROR = 8

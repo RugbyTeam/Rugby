@@ -15,9 +15,10 @@ import sys
 import shutil
 
 class RugbyWorker:
-    def __init__(self, commit_id, rugby_root_dir, rugby_config_path):
+    def __init__(self, commit_id, clone_url, rugby_root_dir, rugby_config_path):
         """
         commit_id = Unique identifier for worker
+        clone_url = URL from which to fetch source code from repo
         root_dir  = Base directory where worker should
                     create its own worker directory
         conf_path = Path to rugby configuration file
@@ -28,16 +29,19 @@ class RugbyWorker:
         
         """
         Private member variables
-            _state    = Current state of worker
-            _vagrant  = Vagrant Object which we use to interface
-                        with VMs
-            _msg_pipe = Connection Object which is used to send/recieve messages
-                        with process that spawned this worker
-            _log_fd   = File descriptor where output to be logged should go
-            _conf_obj = Dict representation of rugby config 
+            _state     = Current state of worker
+            _vagrant   = Vagrant Object which we use to interface
+                         with VMs
+            _clone_dir = Directory where source code should be cloned in VM
+            _msg_pipe  = Connection Object which is used to send/recieve messages
+                         with process that spawned this worker
+            _log_fd    = File descriptor where output to be logged should go
+            _conf_obj  = Dict representation of rugby config 
         """
         self._state = RugbyState.STANDBY
         self._vagrant = None
+        self._clone_dir = config.REPO_DIR
+        self._clone_url = clone_url
         self._msg_pipe = None
         self._log_fd = None
         self._conf_obj = None
@@ -65,7 +69,7 @@ class RugbyWorker:
         # Create fd from log_path which is where select output
         # from worker will be sent. Output is unbuffered
         try:
-            self._log_fd = open(log_path, 'a', 0)
+            self._log_fd = open(log_path, 'w', 0)
         except Exception:
             self._suicide("Couldn't open {} for piping worker output".format(log_path))
 
@@ -89,6 +93,11 @@ class RugbyWorker:
         self._send_msg("Starting up VMs and performing initial provisioning")
         self._spawn_vms()
 
+        # Copy repo source code into VM
+        self._state = RugbyState.CLONING_SOURCE
+        self._send_msg("Cloning source into each VM")
+        self._clone_source()
+
         # Log output from user defined actions. If DEBUG_MODE is on,
         # then output is already being logged and we don't have to do
         # anything
@@ -98,12 +107,12 @@ class RugbyWorker:
         # Run any install commands
         self._state = RugbyState.RUNNING_INSTALL
         self._send_msg("Running install commands")
-        self._run_cmds('install')
+        self._install_cmds()
 
         # Run test commands
         self._state = RugbyState.RUNNING_TESTS
         self._send_msg("Running test script commands")
-        self._run_cmds('script')
+        self._script_cmds()
 
         # Set stdout and stderr back to what they were originally
         sys.stdout = orig_stdout
@@ -130,7 +139,6 @@ class RugbyWorker:
             - Create Directory for VMs
             - Generate Vagrantfile from rugby conf
         """
-        
         # Create directory for storing VM data
         try:
             os.makedirs(self.root_dir)
@@ -149,6 +157,7 @@ class RugbyWorker:
             rugby_loader = RugbyLoader(self.conf_path)
             rugby_loader.render_vagrant(self.root_dir)
         except Exception:
+            raise
             self._suicide("Failed to generate Vagrantfile from config")
 
         # Set internal conf_obj to Dict version of rugby config
@@ -174,47 +183,101 @@ class RugbyWorker:
         except Exception:
             self._suicide("Failed to complete vagrant up")
 
-    def _run_cmds(self, cmd_type):
+    def _clone_source(self):
         """
-        Helper function which executes all user defined
-        commands. 'cmd_type' specifies which type of commands to
-        run from config file EX 'install' and 'script'
+        Helper function which git clones repository source
+        code into each VM. Ensures git is installed on the VM,
+        and installs it if needed
         """
-
         for vm in self._conf_obj:
-            if cmd_type in vm.keys():
-                # VM info needed to run command through fabric
-                keyfile = self._vagrant.keyfile(vm['name'])
-                user = self._vagrant.user(vm['name'])
-                port = self._vagrant.port(vm['name'])
-                host = self._vagrant.hostname(vm['name'])
+            # VM info needed to run command
+            keyfile      = self._vagrant.keyfile(vm['name'])
+            user         = self._vagrant.user(vm['name'])
+            port         = self._vagrant.port(vm['name'])
+            host         = self._vagrant.hostname(vm['name'])
+            # Password for keyfile which should always be by default
+            # 'vagrant'
+            key_password = 'vagrant'
 
-                # Set passphrase/sudo password so we arn't prompted
-                # should be default by 'vagrant'
-                env.password = 'vagrant' 
+            # Install git. If its already present, then this command
+            # should have no effect
+            git_install_cmd = 'apt-get install -y git'
+            self._run_cmd(git_install_cmd, host, user, key_password, port, keyfile)  
 
-                # Disable fabric output prefixes IE ip and output stream info
-                env.output_prefix = False
+            # Clone repo
+            git_clone_cmd = 'git clone {} {}'.format(self._clone_url, self._clone_dir)
 
-                # Prevent fabric from kicking us out from the script when
-                # a command fails
-                env.warn_only = True
+    def _install_cmds(self):
+        """
+        Helper function which runs all 'install' commands
+        in config object
+        """
+        for vm in self._conf_obj:
+            if 'install' in vm.keys():
+                # VM info needed to run command
+                keyfile      = self._vagrant.keyfile(vm['name'])
+                user         = self._vagrant.user(vm['name'])
+                port         = self._vagrant.port(vm['name'])
+                host         = self._vagrant.hostname(vm['name'])
+                # Password for keyfile which should always be by default
+                # 'vagrant'
+                key_password = 'vagrant'
 
-                for cmd in vm[cmd_type]:
-                    with settings(hide('aborts','warnings'),
-                                  key=keyfile,
-                                  user=user, 
-                                  port=port, 
-                                  host_string=host, 
-                                  disable_known_hosts='True', 
-                                  forward_agent='True',
-                                  abort_on_prompts='True'):
-                        
-                        return_obj = sudo(cmd)
+                # Run commands
+                for cmd in vm['install']:
+                    self._run_cmd(cmd, host, user, key_password, port, keyfile) 
 
-                        # If command failed, we should bail
-                        if return_obj.failed == True:
-                            self._suicide('Command \'{}\' failed to run'.format(cmd))
+    def _script_cmds(self):
+        """
+        Helper function which runs all 'script' commands
+        in config object
+        """
+        for vm in self._conf_obj:
+            if 'script' in vm.keys():
+                # VM info needed to run command
+                keyfile      = self._vagrant.keyfile(vm['name'])
+                user         = self._vagrant.user(vm['name'])
+                port         = self._vagrant.port(vm['name'])
+                host         = self._vagrant.hostname(vm['name'])
+                # Password for keyfile which should always be by default
+                # 'vagrant'
+                key_password = 'vagrant'
+
+                # Run commands
+                for cmd in vm['script']:
+                    self._run_cmd(cmd, host, user, key_password, port, keyfile) 
+        
+    def _run_cmd(self, cmd, host, user, password, port, keyfile):
+        """
+        Helper function which executes a cmd on a remote
+        host.
+        """
+
+        # Set passphrase/sudo password so we arn't prompted
+        # should be default by 'vagrant'
+        env.password = password 
+
+        # Disable fabric output prefixes IE ip and output stream info
+        env.output_prefix = False
+
+        # Prevent fabric from kicking us out from the script when
+        # a command fails
+        env.warn_only = True
+
+        with settings(hide('aborts','warnings'),
+                      key=keyfile,
+                      user=user, 
+                      port=port, 
+                      host_string=host, 
+                      disable_known_hosts='True', 
+                      forward_agent='True',
+                      abort_on_prompts='True'):
+            
+            return_obj = sudo(cmd)
+
+            # If command failed, we should bail
+            if return_obj.failed == True:
+                self._suicide('Command \'{}\' failed to run'.format(cmd))
 
 
     def _send_msg(self, msg):
@@ -257,7 +320,8 @@ class RugbyWorker:
         """
         if os.path.isdir(self.root_dir):
             # Destroy VMs
-            self._vagrant.destroy()
+            if self._vagrant != None:
+                self._vagrant.destroy()
             # Remove root directory
             try:
                 shutil.rmtree(self.root_dir, ignore_errors=True)

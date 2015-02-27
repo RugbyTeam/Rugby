@@ -50,10 +50,10 @@ class Rugby:
         self.rugby_root = rugby_root
         self.rugby_log_dir = rugby_log_dir
 
-    def start_runner(self, commit_id, rugby_config, *args):
+    def start_runner(self, commit_id, clone_url, rugby_config, *args):
         """
-        Method takes a unique commit_id, a path (rugby_config)
-        to a rugby config file, and any number of callback functions 
+        Method takes a unique commit_id, clone_url for the repo with the commit id,
+        a path (rugby_config) to a rugby config file, and any number of callback functions 
         and creates a rugby worker which will execute all the instructions 
         in the config. The callback functions will be called everytime there 
         is a state change in the worker.
@@ -66,7 +66,7 @@ class Rugby:
         the workers current state, which can be found in rugby_state.py
         """
         # Instantiate a worker
-        rw = RugbyWorker(commit_id, self.rugby_root, rugby_config)
+        rw = RugbyWorker(commit_id, clone_url, self.rugby_root, rugby_config)
         
         # Create pipe for interprocess communication
         my_end, their_end = Pipe()
