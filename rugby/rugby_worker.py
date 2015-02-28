@@ -154,7 +154,7 @@ class RugbyWorker:
         # Parse rugby config and generate
         # Vagrantfile into root dir
         try:
-            rugby_loader = RugbyLoader(self.conf_path)
+            rugby_loader = RugbyLoader(self.commit_id, self.conf_path)
             rugby_loader.render_vagrant(self.root_dir)
         except Exception:
             raise

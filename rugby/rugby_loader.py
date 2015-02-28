@@ -42,8 +42,8 @@ conf_vm_schema = {
         'service': conf_vm_service_schema
     }, 
     'optional': {
-	'install': arr_of_str_schema,
-	'script': arr_of_str_schema
+    'install': arr_of_str_schema,
+    'script': arr_of_str_schema
     }
 }
 
@@ -70,9 +70,11 @@ class RugbyLoader:
         - valid_types: dictionary version of .rugby.yml
     """
 
-    def __init__(self, rugby_conf, **kwargs):
+    def __init__(self, commit_id, rugby_conf, **kwargs):
         """
         Args:
+            commit_id (str) unique commit id used
+                            to create vm private network
             rugby_conf (str) path to .rugby.yml
         Kwargs:
             static_ips (list) optionally pass a list static_ips 
@@ -92,17 +94,19 @@ class RugbyLoader:
         self.rugby_obj = vms
         
         # Validate VM definitions object 
-        if not self._valid_config():
+         if not self._valid_config():
             raise ValidationError(rugby_conf + " failed validation")
 
-        # Inject static ip for each VM definition
+        # Inject static ip and commit idfor each VM definition
         for vm in vms:
+            # Static ip injection
             vm_group = vm['service']['group']
             vm['ip'] = self.static_ips[vm_group]
-
-	
+            # Commit id injection
+            vm['commit_id'] = commit_id
+    
     def get_config(self):
-	return self.rugby_obj
+        return self.rugby_obj
 
     def render_vagrant(self, dest_dir):
         """
