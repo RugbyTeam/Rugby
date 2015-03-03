@@ -94,7 +94,7 @@ class RugbyLoader:
         self.rugby_obj = vms
         
         # Validate VM definitions object 
-         if not self._valid_config():
+        if not self._valid_config():
             raise ValidationError(rugby_conf + " failed validation")
 
         # Inject static ip and commit idfor each VM definition
