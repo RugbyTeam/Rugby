@@ -156,7 +156,8 @@ def sigint_handler(sig_num, frame):
         # Delete workers. Doing this calls the __del__ method on each
         # worker which should perform cleanup
         Rugby.workers = {}
-        sys.exit(1)
+
+    sys.exit(1)
 
 # Install sigint handler
-#signal.signal(signal.SIGINT, sigint_handler)
+signal.signal(signal.SIGINT, sigint_handler)

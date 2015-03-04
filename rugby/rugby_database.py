@@ -24,17 +24,20 @@ class RugbyDatabase:
         connection = sqlite3.connect(self.db_path)
         connection.row_factory = dict_factory
         cursor = connection.cursor()
+        # Escape single quotes
         try:
             cursor.execute(query)
             result = cursor.fetchall()
             connection.commit()
         except Exception:
             logger.debug('Could not execute query')
+            logger.debug('COULD NOT EXECUTE QUERY:  %s' % query)
             raise
         connection.close()
         return result
     
     def insert_build(self, commit_id, commit_message):
+        commit_message = commit_message.replace('\'', '\'\'')
         try:
             self._execute("INSERT INTO builds VALUES('%s', '%s', '%s')" % (commit_id, commit_message, str(RugbyState.INITIALIZING)))
         except sqlite3.IntegrityError:
