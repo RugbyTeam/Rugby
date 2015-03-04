@@ -100,6 +100,7 @@ To start off the build, run `python test.py`. Make sure you have the directories
 
 * Install [pip](https://pip.pypa.io/en/latest/installing.html)
 * Install [virtualenv](http://docs.python-guide.org/en/latest/dev/virtualenvs/)
+* Install sqlite3
 
 ### Setting up the environment
 
