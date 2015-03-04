@@ -85,7 +85,7 @@ r = Rugby()
 r.start_runner('123123123131', 
                'https://github.com/CrazyWearsPJs/UCRcareer.git', 
                '.rugby.yml', 
-               print_status_callback);
+               print_status_callback)
 
 while 1:
     # Wait till everything is completed
