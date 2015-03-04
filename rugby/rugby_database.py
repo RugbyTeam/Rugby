@@ -10,8 +10,6 @@ logger = logging.getLogger(config.LOGGER_NAME)
 class RugbyDatabase:
     def __init__(self, rugby_root):
         self.db_path = os.path.join(rugby_root, 'rugby.db')
-        if not os.path.exists(self.db_path):
-                os.makedirs(self.db_path)
         self._execute("""CREATE TABLE IF NOT EXISTS builds(commit_id TEXT PRIMARY KEY,
                                                            commit_message TEXT,
                                                            state TEXT)""")
