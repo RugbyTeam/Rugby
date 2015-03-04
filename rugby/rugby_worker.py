@@ -176,7 +176,8 @@ class RugbyWorker:
         to bring up VM's and provisions them with 
         our basic packages (defined in Vagrantfile)
         """
-
+        self._send_msg("Starting up VMs and performing initial provisioning")
+        
         # Start VMs
         try:
             self._vagrant.up()

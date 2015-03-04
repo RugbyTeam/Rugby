@@ -1,6 +1,7 @@
 # internal
 from rugby_worker import RugbyWorker
 from rugby_state import RugbyState
+from rugby_database import RugbyDatabase
 import config
 
 # stdlib
@@ -49,8 +50,12 @@ class Rugby:
         """
         self.rugby_root = rugby_root
         self.rugby_log_dir = rugby_log_dir
+        self.rugby_db = RugbyDatabase(rugby_root)
 
-    def start_runner(self, commit_id, clone_url, rugby_config, *args):
+    def get_builds(self):
+        return self.rugby_db.get_builds()
+
+    def start_runner(self, commit_id, commit_message, clone_url, rugby_config, *args):
         """
         Method takes a unique commit_id, clone_url for the repo with the commit id,
         a path (rugby_config) to a rugby config file, and any number of callback functions 
@@ -79,9 +84,15 @@ class Rugby:
         # Start worker process
         worker_process = Process(target=rw, args=(their_end, worker_log_path))
         worker_process.start()
+        
+        # Record database entry
+        self.rugby_db.insert_build(commit_id, commit_message)
+
+        # Set callbacks
+        callbacks = (self.rugby_db.update_build,) + args
 
         # Record worker info
-        worker_info = WorkerInfo(worker_process.pid, my_end, args)
+        worker_info = WorkerInfo(worker_process.pid, my_end, callbacks)
         Rugby.workers[commit_id] = worker_info
 
     @staticmethod
@@ -148,4 +159,4 @@ def sigint_handler(sig_num, frame):
         sys.exit(1)
 
 # Install sigint handler
-signal.signal(signal.SIGINT, sigint_handler)
+#signal.signal(signal.SIGINT, sigint_handler)
