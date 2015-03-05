@@ -42,8 +42,9 @@ conf_vm_schema = {
         'service': conf_vm_service_schema
     }, 
     'optional': {
-    'install': arr_of_str_schema,
-    'script': arr_of_str_schema
+        'config': '//str',
+        'install': arr_of_str_schema,
+        'script': arr_of_str_schema
     }
 }
 
@@ -108,7 +109,7 @@ class RugbyLoader:
     def get_config(self):
         return self.rugby_obj
 
-    def render_vagrant(self, dest_dir):
+    def render_vagrant(self, dest_dir, repo_location=""):
         """
         dest_dir = path to directory where rendered
                    Vagrantfile should go
@@ -119,7 +120,7 @@ class RugbyLoader:
             j2_template = jinja2.Template(template_file.read())
             # Write resulting Vagrantfile to dest_dir
             with open(generated_vagrantfile, 'w') as output_vagrantfile:
-                output_vagrantfile.write(j2_template.render(vms=self.rugby_obj, site_yml_path=config.SITE_YML))
+                output_vagrantfile.write(j2_template.render(vms=self.rugby_obj, site_yml_path=config.SITE_YML, repo_location=repo_location))
     
     def _validate_groups_and_types(self):
         """

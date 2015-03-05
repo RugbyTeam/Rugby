@@ -15,10 +15,11 @@ import sys
 import shutil
 
 class RugbyWorker:
-    def __init__(self, commit_id, clone_url, rugby_root_dir, rugby_config_path):
+    def __init__(self, commit_id, clone_url, raw_url, rugby_root_dir, rugby_config_path):
         """
         commit_id = Unique identifier for worker
         clone_url = URL from which to fetch source code from repo
+        raw_url = URL to directly download single files from
         root_dir  = Base directory where worker should
                     create its own worker directory
         conf_path = Path to rugby configuration file
@@ -42,6 +43,7 @@ class RugbyWorker:
         self._vagrant = None
         self._clone_dir = config.REPO_DIR
         self._clone_url = clone_url
+        self._raw_url = raw_url
         self._msg_pipe = None
         self._log_fd = None
         self._conf_obj = None
@@ -155,7 +157,7 @@ class RugbyWorker:
         # Vagrantfile into root dir
         try:
             rugby_loader = RugbyLoader(self.commit_id, self.conf_path)
-            rugby_loader.render_vagrant(self.root_dir)
+            rugby_loader.render_vagrant(self.root_dir, self._raw_url)
         except Exception:
             raise
             self._suicide("Failed to generate Vagrantfile from config")
@@ -241,7 +243,7 @@ class RugbyWorker:
 
                 # Run commands
                 for cmd in vm['script']:
-                    self._run_cmd(cmd, self._clone_dir, host, user, key_password, port, keyfile) 
+                    self._run_cmd(cmd, self._clone_dir, host, user, key_password, port, keyfile)
         
     def _run_cmd(self, cmd, location, host, user, password, port, keyfile):
         """
