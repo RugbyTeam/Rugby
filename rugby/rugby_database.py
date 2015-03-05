@@ -9,10 +9,27 @@ logger = logging.getLogger(config.LOGGER_NAME)
 
 class RugbyDatabase:
     def __init__(self, rugby_root):
+        """
+        timestamp of head commit
+        timestamp of build finish
+        author[login, email, avatar]
+        commit_url
+        contributors emails
+        commit_id
+        commit_message
+        state
+        """
         self.db_path = os.path.join(rugby_root, 'rugby.db')
         self._execute("""CREATE TABLE IF NOT EXISTS builds(commit_id TEXT PRIMARY KEY,
                                                            commit_message TEXT,
-                                                           state TEXT)""")
+                                                           commit_url TEXT,
+                                                           state TEXT,
+                                                           commit_timestamp TEXT,
+                                                           finish_timestamp TEXT,
+                                                           author_login TEXT,
+                                                           author_email TEXT,
+                                                           author_avatar_url TEXT,
+                                                           contributors_email TEXT)""")
 
     def _execute(self, query):
         def dict_factory(cursor, row):
@@ -36,10 +53,21 @@ class RugbyDatabase:
         connection.close()
         return result
     
-    def insert_build(self, commit_id, commit_message):
-        commit_message = commit_message.replace('\'', '\'\'')
+    def insert_build(self, build_info):
+        commit_message = build_info.commit_message.replace('\'', '\'\'')
+        values = (build_info.commit_id,
+                  build_info.commit_message,
+                  build_info.commit_url,
+                  str(RugbyState.INITIALIZING),
+                  build_info.commit_timestamp,
+                  build_info.finish_timestamp,
+                  build_info.author_login,
+                  build_info.author_email,
+                  build_info.author_avatar_url,
+                  build_info.contributors_email)
         try:
-            self._execute("INSERT INTO builds VALUES('%s', '%s', '%s')" % (commit_id, commit_message, str(RugbyState.INITIALIZING)))
+            self._execute("""INSERT INTO builds VALUES('%s', '%s', '%s', '%s', '%s', 
+                                                       '%s', '%s', '%s', '%s', '%s')""" % values)
         except sqlite3.IntegrityError:
             logger.debug('Could not record build, commit_id already exists')
 
@@ -49,5 +77,3 @@ class RugbyDatabase:
     def get_builds(self):
         return self._execute("SELECT * FROM builds")
  
-
-        

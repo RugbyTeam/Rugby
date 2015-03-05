@@ -1,5 +1,5 @@
 # internal
-from rugby import Rugby
+from rugby import Rugby, BuildInfo
 import config 
 
 # stdlib
