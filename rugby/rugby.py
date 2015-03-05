@@ -15,6 +15,21 @@ import os
 
 logger = logging.getLogger(config.LOGGER_NAME)
 
+class BuildInfo:
+    """
+    Holding all the information needed for a build
+    """
+    def __init__(self, commit_obj):
+        self.commit_id = commit_obj["commit_id"]
+        self.commit_message = commit_obj["commit_message"]
+        self.commit_url = commit_obj["commit_url"]
+        self.commit_timestamp = commit_obj["commit_timestamp"]
+        self.finish_timestamp = None
+        self.author_login = commit_obj["author_login"]
+        self.author_email = commit_obj["author_email"]
+        self.author_avatar_url = commit_obj["author_avatar_url"]
+        self.contributors_email = commit_obj["contributors_email"]
+
 class WorkerInfo:
     """
     Struct to hold all the info we need about a RugbyWorker
