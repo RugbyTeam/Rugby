@@ -70,6 +70,9 @@ class Rugby:
     def get_builds(self):
         return self.rugby_db.get_builds()
 
+    def get_info(self, commit_id):
+        return self.rugby_db.get_info(commit_id) 
+
     def start_runner(self, build_info, clone_url, rugby_config, *args):
         """
         Method takes a unique commit_id, clone_url for the repo with the commit id,
