@@ -78,5 +78,5 @@ class RugbyDatabase:
         return self._execute("SELECT * FROM builds")
     
     def get_info(self, commit_id):
-        return self._execute("SELECT * FROM builds WHERE commit_id = '%s'" % (commit_id))
+        return self._execute("SELECT * FROM builds WHERE commit_id = '%s'" % (commit_id))[0]
  

@@ -71,6 +71,10 @@ class Rugby:
         return self.rugby_db.get_builds()
 
     def get_info(self, commit_id):
+        """
+        Method takes a unique commit_id and returns a dictionary containing 
+        all the information related to it.
+        """
         return self.rugby_db.get_info(commit_id) 
 
     def start_runner(self, build_info, clone_url, rugby_config, *args):
