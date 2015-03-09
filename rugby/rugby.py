@@ -144,8 +144,13 @@ def worker_poller():
             # If worker has sent a message
             if worker.msg_pipe.poll():
                 # Fetch message from pipe
-                recv_msg = str(worker.msg_pipe.recv()) 
-                logger.debug(recv_msg)
+                try:
+                    recv_msg = str(worker.msg_pipe.recv()) 
+                    logger.debug(recv_msg)
+                except EOFError as err:
+                    recv_msg = '{} {} Pipe-Closed'.format(worker_id, RugbyState.ERROR)
+                    logger.debug('[Worker {}] Encountered Error: {}'.format(worker_id, str(err)))
+                    
                 # Extract info from recv_msg
                 # NOTE: commit_id and worker_id should be equal
                 # to each other
