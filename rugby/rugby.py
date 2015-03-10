@@ -82,7 +82,7 @@ class Rugby:
         """
         return self.rugby_db.get_info(commit_id) 
 
-    def start_runner(self, build_info, clone_url, rugby_config, *args):
+    def start_runner(self, build_info, rugby_config, *args):
         """
         Method takes a unique commit_id, clone_url for the repo with the commit id,
         a path (rugby_config) to a rugby config file, and any number of callback functions 
@@ -98,6 +98,8 @@ class Rugby:
         the workers current state, which can be found in rugby_state.py
         """
         commit_id = build_info.commit_id
+        clone_url = build_info.clone_url
+        raw_url = build_info.raw_url
 
         # Instantiate a worker
         rw = RugbyWorker(commit_id, clone_url, raw_url, self.rugby_root, rugby_config)
