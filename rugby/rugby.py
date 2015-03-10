@@ -132,7 +132,7 @@ class Rugby:
         """
         Method takes a commit_id and worker_state, and sets the corresponding
         Worker's state appropriatly. If the worker's state is ERROR or
-        SUCCESS, we add the worker to _defunct_workers so they can be reaped
+        SUCCESS, we add the worker to defunct_workers so they can be reaped
         """
         Rugby.workers[commit_id].state = worker_state
         if worker_state == str(RugbyState.SUCCESS) or worker_state == str(RugbyState.ERROR):
