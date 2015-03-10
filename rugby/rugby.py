@@ -46,7 +46,12 @@ class WorkerInfo:
         
         # Will be set as Worker starts to work (haha)
         self.state = None
-       
+
+    def __del__(self):
+        """
+        Close msg_pipe when reference to worker is lost
+        """
+        self.msg_pipe.close()
 
 class Rugby:
     """
