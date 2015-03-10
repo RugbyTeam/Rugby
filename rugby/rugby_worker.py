@@ -123,7 +123,7 @@ class RugbyWorker:
         # Cleanup
         self._state = RugbyState.CLEANING_UP
         self._send_msg("Cleaning up")
-        #self._cleanup()
+        self._cleanup()
 
         # Done! If we made it to here, there were no errors
         self._state = RugbyState.SUCCESS

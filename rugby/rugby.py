@@ -15,6 +15,21 @@ import os
 
 logger = logging.getLogger(config.LOGGER_NAME)
 
+class BuildInfo:
+    """
+    Holding all the information needed for a build
+    """
+    def __init__(self, commit_obj):
+        self.commit_id = commit_obj["commit_id"]
+        self.commit_message = commit_obj["commit_message"]
+        self.commit_url = commit_obj["commit_url"]
+        self.commit_timestamp = commit_obj["commit_timestamp"]
+        self.finish_timestamp = None
+        self.author_login = commit_obj["author_login"]
+        self.author_email = commit_obj["author_email"]
+        self.author_avatar_url = commit_obj["author_avatar_url"]
+        self.contributors_email = commit_obj["contributors_email"]
+
 class WorkerInfo:
     """
     Struct to hold all the info we need about a RugbyWorker
@@ -31,7 +46,12 @@ class WorkerInfo:
         
         # Will be set as Worker starts to work (haha)
         self.state = None
-       
+
+    def __del__(self):
+        """
+        Close msg_pipe when reference to worker is lost
+        """
+        self.msg_pipe.close()
 
 class Rugby:
     """
@@ -55,7 +75,14 @@ class Rugby:
     def get_builds(self):
         return self.rugby_db.get_builds()
 
-    def start_runner(self, commit_id, commit_message, clone_url, raw_url, rugby_config, *args):
+    def get_info(self, commit_id):
+        """
+        Method takes a unique commit_id and returns a dictionary containing 
+        all the information related to it.
+        """
+        return self.rugby_db.get_info(commit_id) 
+
+    def start_runner(self, build_info, clone_url, rugby_config, *args):
         """
         Method takes a unique commit_id, clone_url for the repo with the commit id,
         a path (rugby_config) to a rugby config file, and any number of callback functions 
@@ -70,6 +97,8 @@ class Rugby:
         Where commit_id is the unique id used to spawn the worker, and RugbyState is
         the workers current state, which can be found in rugby_state.py
         """
+        commit_id = build_info.commit_id
+
         # Instantiate a worker
         rw = RugbyWorker(commit_id, clone_url, raw_url, self.rugby_root, rugby_config)
         
@@ -86,7 +115,7 @@ class Rugby:
         worker_process.start()
         
         # Record database entry
-        self.rugby_db.insert_build(commit_id, commit_message)
+        self.rugby_db.insert_build(build_info)
 
         # Set callbacks
         callbacks = (self.rugby_db.update_build,) + args
