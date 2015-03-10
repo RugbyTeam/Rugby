@@ -58,8 +58,11 @@ class Rugby:
     Rugby Globals
         - workers: Dictionary of all rugby workers
             { "<commit_id>" : {"worker" : <WorkerInfo>} }
+        - defunct_workers: Array of commit_id's which should be removed from
+                           workers dict.
     """
     workers = {}
+    defunct_workers = []
 
     def __init__(self, rugby_root=config.BASE_DIR, rugby_log_dir=config.LOG_DIR):
         """
@@ -129,14 +132,25 @@ class Rugby:
         """
         Method takes a commit_id and worker_state, and sets the corresponding
         Worker's state appropriatly. If the worker's state is ERROR or
-        SUCCESS, we instead perform cleanup tasks
+        SUCCESS, we add the worker to _defunct_workers so they can be reaped
         """
-        if worker_state != RugbyState.SUCCESS and worker_state != RugbyState.ERROR:
-            Rugby.workers[commit_id].state = worker_state
-        else:
-            # TODO: More cleanup tasks will probably be needed. For now
-            # we just remove the worker from our dict of workers
-            del Rugby.workers[commit_id]
+        Rugby.workers[commit_id].state = worker_state
+        if worker_state == str(RugbyState.SUCCESS) or worker_state == str(RugbyState.ERROR):
+            # Add worker to defunct list
+            Rugby.defunct_workers.append(commit_id)
+
+    @staticmethod
+    def reap_defunct():
+        """
+        Method removes each defunct_workers from workers, initiating
+        their destructor
+        """
+        for i in Rugby.defunct_workers:
+            # Delete worker from workers
+            del Rugby.workers[i]
+
+        # Clear defunct list
+        Rugby.defunct_workers = []
 
 def worker_poller():
     """
@@ -166,7 +180,10 @@ def worker_poller():
                 # in the message
                 Rugby.state_change(commit_id, state)
 
-        # Wait a bit before checking again
+        # Reap all defunct workers
+        Rugby.reap_defunct()
+
+        # Wait a bit before iterating through workers again
         time.sleep(5)
 
 # Start polling workers 
