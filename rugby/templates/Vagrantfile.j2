@@ -11,7 +11,9 @@ Vagrant.configure "2" do |config|
                "{{ vm.service.group }}" => ["{{ vm.name }}"]
             }
             ansible.extra_vars = {
-                {{ vm.service.group }}_type: "{{ vm.service.type }}"
+                {{ vm.service.group }}_type: '{{ vm.service.type }}',
+                ip: '{{ vm.ip }}'{%- if vm.config is defined -%},
+                config: '{{ repo_location }}/{{ vm.config }}'{% endif %} 
             }
         end
     end
