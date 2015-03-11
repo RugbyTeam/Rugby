@@ -29,6 +29,8 @@ class BuildInfo:
         self.author_email = commit_obj["author_email"]
         self.author_avatar_url = commit_obj["author_avatar_url"]
         self.contributors_email = commit_obj["contributors_email"]
+        self.clone_url = commit_obj["clone_url"]
+        self.raw_url = commit_obj["raw_url"]
 
 class WorkerInfo:
     """
